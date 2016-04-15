@@ -10,7 +10,7 @@ select_fields=$3
 # if you want to see the output of the script, pass '2'
 debug=$4
 # a simple variable denoting temporary directory
-t="$t"
+tdir="tmp/"
 
 
 # Clean the variable with sizes to clear white space
@@ -29,7 +29,7 @@ split_lines() {
 	do
 		row_array[$i]="${my_array[@]}"
 		# print value to file for checking if errors exist
-		printf %s "${row_array[*]}" > "$t"input-file-rows.txt
+		printf %s "${row_array[*]}" > "$tdir"input-file-rows.txt
 		i=`expr $i + 1`
 		# finished using data_file		
 	done < $data_file
@@ -42,7 +42,7 @@ get_sizes() {
 	size_array=()
 	IFS=',' read -a size_array <<< $sizes
 	# print value to file for checking if errors exist
-	printf %s "${size_array[*]}" > "$t"input-file-sizes.txt
+	printf %s "${size_array[*]}" > "$tdir"input-file-sizes.txt
 }
 
 
@@ -53,22 +53,22 @@ get_parts() {
 	# 
 	temp_part=$(cut -d',' -f1 $data_file)
 	# print value to file for checking if errors exist and to manipulate data further
-	printf %s "${temp_part[*]}" > "$t"input-file-parts.txt
-	sed -i -e '$a\' "$t"input-file-parts.txt
+	printf %s "${temp_part[*]}" > "$tdir"input-file-parts.txt
+	sed -i -e '$a\' "$tdir"input-file-parts.txt
 	i=0
 	while IFS='\n' read -a another_array
 	do
 		parts_array[$i]="${another_array[@]}"
-		printf %s "${parts_array[*]}" > "$t"output-file-parts.txt
+		printf %s "${parts_array[*]}" > "$tdir"output-file-parts.txt
 		i=`expr $i + 1`
-	done < "$t"input-file-parts.txt
+	done < "$tdir"input-file-parts.txt
 }
 
 
 # concatenate part numbers with all sizes to be matched with prices later
 permutation_creation() {
 	# ensure file is empty before output is created
-	> "$t"permutations.txt	
+	> "$tdir"permutations.txt	
 	part_perms=()
 	i=1
 	l=0
@@ -87,7 +87,7 @@ permutation_creation() {
 			n=`expr $n + 1`			
 			l=`expr $l + 1`
 			# Append to file of permuatations as to not overwrite its contents
-			printf "${part_perms[$f]}\n" >> "$t"permutations.txt
+			printf "${part_perms[$f]}\n" >> "$tdir"permutations.txt
 		done
 		i=`expr $i + 1`
 	done
@@ -98,8 +98,8 @@ permutation_creation() {
 		final_part_array[$i]="${my_array[@]}"
 		# print value to file for checking if errors exist
 		i=`expr $i + 1`
-	done < "$t"permutations.txt
-	printf %s "${final_part_array[*]}" > "$t"final_part.txt
+	done < "$tdir"permutations.txt
+	printf %s "${final_part_array[*]}" > "$tdir"final_part.txt
 }
 
 
@@ -111,7 +111,7 @@ select_prices() {
 		do
 			# select_fields is the third argument, count starting at 1 from the end of line (last price) to first price (somewhere in the middle of the line)
 			temp_array[$i]=$(sed 's/,*$//' | rev | cut -d ',' -f $select_fields | rev)		
-			echo "${temp_array[$i]}" > "$t"price-file.txt
+			echo "${temp_array[$i]}" > "$tdir"price-file.txt
 			i=`expr $i + 1`
 	done < $data_file	
 }
@@ -119,16 +119,15 @@ select_prices() {
 
 split_price() {
 	prices=()
-	i=1
+	l=1
 	parts_array_length=`expr ${#parts_array[@]}`
-	# set line
 	# create array of prices to later be added into final txt doc with corresponding part permutation
-	while [ $i -lt $parts_array_length ]
+	while [ $l -lt $parts_array_length ]
 	do
-		prices[$i]=$(sed -n "$i{p}" < "$t"price-file.txt)
-		i=`expr $i + 1`
+		prices[$l]=$(sed -n "$l{p}" < "$tdir"price-file.txt)
+		l=`expr $l + 1`
 	done
-	> "$t"prices.txt
+	> "$tdir"prices.txt
 	fin_price=()
 	i=0
 	z=1
@@ -136,18 +135,18 @@ split_price() {
 	# split each comma delimited line into newline on each comma to be stored into individual array elements for matching with part permutation
 	while [ $i -lt $parts_array_length ]
 	do
-		line=$(sed -n "$z{p}" < "$t"price-file.txt)
+		line=$(sed -n "$z{p}" < "$tdir"price-file.txt)
 		n=0
 		IFS=',' read -r -a array <<< $line
 		while [ $n -lt ${#size_array[@]} ]
 		do
-			echo "${array[$n]}" >> "$t"prices.txt
+			echo "${array[$n]}" >> "$tdir"prices.txt
 			n=`expr $n + 1`
 		done
 	i=`expr $i + 1`
 	z=`expr $z + 1`
 	done
-	removing_newlines_from_end_of_doc=$(<"$t"prices.txt); printf '%s\n' "$removing_newlines_from_end_of_doc" > "$t"prices.txt
+	removing_newlines_from_end_of_doc=$(<"$tdir"prices.txt); printf '%s\n' "$removing_newlines_from_end_of_doc" > "$tdir"prices.txt
 	final_price_array=()
 	i=0
 	# storing each line of now individual prices into an array for easy matching with corresponding part permutation
@@ -155,9 +154,9 @@ split_price() {
 	do
 		final_price_array[$i]="${my_array[@]}"
 		i=`expr $i + 1`
-		# finished using "$t"permutations.txt		
-	done < "$t"prices.txt
-	printf %s "${final_price_array[*]}" > "$t"final_price.txt
+		# finished using "$tdir"permutations.txt		
+	done < "$tdir"prices.txt
+	printf %s "${final_price_array[*]}" > "$tdir"final_price.txt
 }
 
 
@@ -171,7 +170,7 @@ final_output() {
 		printf "${final_part_array[$i]},${final_price_array[$i]}\n" >> final_output.txt
 		i=`expr $i + 1`
 	done
-	echo "Data is stored in tmp/final_output.txt"
+	echo "Data is stored in "$tdir"final_output.txt"
 }
 
 
@@ -184,7 +183,7 @@ debug() {
 	fi
 	if [[ "$debug" -eq 1 ]]
 		then
-		rm "$t"*
+		rm "$tdir"*
 	fi
 	if [[ "$debug" -eq 2 ]]
 		then
