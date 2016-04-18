@@ -47,11 +47,9 @@ explode_sizes() {
 		declare -i tmp0=$(get_index "${ele_split[0]}")
 		declare -i tmp1=$(get_index "${ele_split[1]}")
 		if [[ "$tmp0" -gt "$tmp1" ]]; then
-			echo $tmp0 $tmp1
 			tmp2=$tmp0
 			tmp0=$tmp1
-			tmp1=$tmp2
-			echo $tmp0 $tmp1	
+			tmp1=$tmp2	
 		fi
 		# check elements of given data for a range to be exploded
 		if [[ "${size_array[$i]}" = *-* ]]; then			

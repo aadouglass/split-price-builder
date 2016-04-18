@@ -12,6 +12,7 @@ debug=$4
 # a simple variable denoting temporary directory
 tdir="tmp/"
 
+cd; cd bash-scripts;
 
 # Clean the variable with sizes to clear white space
 trim_sizes() {
@@ -162,15 +163,15 @@ split_price() {
 
 # print part number next to price
 final_output() {
-	> final_output.txt
+	> data/final_output.txt
 	length=`expr ${#final_price_array[@]}`
 	i=0
 	while [ $i -lt $length ]
 	do
-		printf "${final_part_array[$i]},${final_price_array[$i]}\n" >> final_output.txt
+		printf "${final_part_array[$i]},${final_price_array[$i]}\n" >> data/final_output.txt
 		i=`expr $i + 1`
 	done
-	echo "Data is stored in "$tdir"final_output.txt"
+	echo "Data is stored in data/final_output.txt"
 }
 
 
