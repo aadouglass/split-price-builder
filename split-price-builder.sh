@@ -11,6 +11,7 @@ select_fields=$3
 debug=$4
 # a simple variable denoting temporary directory
 tdir="tmp/"
+data=data
 
 cd; cd bash-scripts;
 
@@ -96,7 +97,7 @@ permutation_creation() {
 	final_part_array=()
 	while IFS='' read -a my_array
 	do
-		final_part_array[$i]="${my_array[@]}"
+		final_part_array[$i]=$(tr -d '\040\011\012\015' <<< "${my_array[@]}")
 		# print value to file for checking if errors exist
 		i=`expr $i + 1`
 	done < "$tdir"permutations.txt
@@ -132,7 +133,7 @@ split_price() {
 	fin_price=()
 	i=0
 	z=1
-	parts_array_length=`expr ${#parts_array[@]}`
+	parts_array_length=`expr ${#parts_array[@]} - 1`
 	# split each comma delimited line into newline on each comma to be stored into individual array elements for matching with part permutation
 	while [ $i -lt $parts_array_length ]
 	do
@@ -147,7 +148,6 @@ split_price() {
 	i=`expr $i + 1`
 	z=`expr $z + 1`
 	done
-	removing_newlines_from_end_of_doc=$(<"$tdir"prices.txt); printf '%s\n' "$removing_newlines_from_end_of_doc" > "$tdir"prices.txt
 	final_price_array=()
 	i=0
 	# storing each line of now individual prices into an array for easy matching with corresponding part permutation
@@ -163,15 +163,16 @@ split_price() {
 
 # print part number next to price
 final_output() {
-	> data/final_output.txt
-	length=`expr ${#final_price_array[@]}`
+	> $data/final_output.txt
+	length=`expr ${#final_part_array[@]}`
 	i=0
 	while [ $i -lt $length ]
 	do
-		printf "${final_part_array[$i]},${final_price_array[$i]}\n" >> data/final_output.txt
+		printf "${final_part_array[$i]},${final_price_array[$i]}\n" >> $data/final_output.txt
 		i=`expr $i + 1`
 	done
-	echo "Data is stored in data/final_output.txt"
+	echo $length ${#final_part_array[@]}
+	echo "Data is stored in $data/final_output.txt"	
 }
 
 
@@ -188,7 +189,7 @@ debug() {
 	fi
 	if [[ "$debug" -eq 2 ]]
 		then
-		xdg-open final_output.txt
+		xdg-open $data/final_output.txt
 	fi
 }
 
