@@ -14,8 +14,7 @@ There are six parameters to be passed to the script:
 * Parameter 3: The range of columns/fields that the prices span across. (ex.  
 |        |        |        |        |  S-XL  | 2XL-4XL| 5XL-6XL|  
 |--------|--------|--------|--------|--------|--------|--------|  
-| part1  | field2 | field3 | field4 | $12.45 | $18.21 | $23.92 |  
-|--------|--------|--------|--------|--------|--------|--------|  
+| part1  | field2 | field3 | field4 | $12.45 | $18.21 | $23.92 |    
 | part2  | field2 | field3 | field4 | $12.45 | $18.21 | $23.92 |  
 parameter = 5-7).
 * Parameter 4: Field/Column number containing parts/products.
