@@ -20,6 +20,7 @@ Example:
 This will use the data within file.csv located in the data directory, explode any ranges of data found in columns 5-7, and open the output in your default text editor called by the last parameter '2', if it was '1', tmp/files would be deleted.
 ```
 $ bash ./split-price-builder.sh data/file.csv 0 5-7 1 1 2
+
  part1, price
  part2, price
  part3, price
@@ -30,7 +31,8 @@ $ bash ./split-price-builder.sh data/file.csv 0 5-7 1 1 2
  ............
  ............
  ............
-$ 
+ last part, price
+$
 ```
 Version 1.0
 
