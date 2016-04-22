@@ -2,24 +2,27 @@
 # export 'PS4=\e[1;34m+ ${FUNCNAME:-main}@\e[1;36m${BASH_SOURCE}: \e[0;32m${LINENO}->  \e[0m'
 # > error_log/price-builder-error-log.txt
 # set -o xtrace > error_log/price-builder-error-log.txt
-# give me the path to the data
+# rm $tdir/*
 data=data
 
 tdir=tmp
-
+# give me the path to the file of data
 price_part_file=$1
-
-reused_datafile=$2
-
+# if the columns need exploding use '0' if not, enter '1'
+need_splodin=$2
+if [[ "$2" = 0 ]]; then
+	reused_datafile="data/column_splosion.csv"
+elif [[ "$2" = 1 ]]; then
+	reused_datafile="$1"
+fi
+# enter the range of fields/columns that the sizes/prices span
 price_size_fields=$3
-
+# what field/column are the parts located
 part_fields=$4
-
+# what line are the sizes locatated
 size_line=$5
-
-file_option=$6
-# debug opens output in default text editor if '1' is passed as argument
-debug=$7
+# debug clears tmp directory on passing of '1', opens output in default text editor if '2' is passed as argument and anything else exits debug.
+debug=$6
 
 
 range_array=('S' 'M' 'L' 'XL' '2XL' '3XL' '4XL' '5XL' '6XL' '7XL' '8XL')
@@ -36,18 +39,17 @@ trim_format() {
 	header=$(head -n 1 $price_part_file)
 	trimmed0=$(sed -e 's/^,*//g; s/,*$//g' <<< $header)
 	trimmed=$(sed 's/\//-/g' <<< $trimmed0)
-	tail -n +2 < "$price_part_file" > $tdir/pfile.txt
+	tail -n +2 < $price_part_file > $tdir/pfile.txt
 	cut -d, -f $price_size_fields < $tdir/pfile.txt > $tdir/price-doc.txt
-
-
-
-	#### spb.sh
 	cut -d, -f $part_fields < $tdir/pfile.txt > $tdir/part-doc.txt
-	temp_sizes1=$(sed -n "${size_line}p" < $reused_datafile)
-	temp_sizes2=$(sed -e 's/^,*//g; s/,*$//g' <<< $temp_sizes1)
-	sizes=$(sed 's/ //g' <<< $temp_sizes2)
 }
 
+retrim() {
+	temp_sizes=$(sed -n "${size_line}p" < $reused_datafile)
+	sizes=$(sed -e 's/^,*//g; s/,*$//g; s/ //g' <<< $temp_sizes)
+}
+
+ 
 get_index() {
 	# pass the size as the first argument to be compared to range_array and return its index for arithmetic
 	value=$1
@@ -61,7 +63,8 @@ get_index() {
 explode_sizes() {
 	# extract sizes for manipulation
 	> $tdir/dif-doc.txt
-	size_line=$(head -n 1 $price_part_file)
+	> $tdir/recalculation.txt
+	#########################################################size_line=$(head -n 1 $price_part_file)
 	IFS=',' read -a size_array <<< $trimmed
 	i=0
 	dif_array=()
@@ -71,14 +74,16 @@ explode_sizes() {
 	while [ "$i" -lt "${#size_array[@]}" ]; do
 		ele_split[0]=$(cut -d - -f 1 <<< "${size_array[$i]}")
 		ele_split[1]=$(<<< "${size_array[$i]}" rev | cut -d - -f 1 | rev )
-		declare -i tmp0=$(get_index "${ele_split[0]}")
-		declare -i tmp1=$(get_index "${ele_split[1]}")
+		declare -i tmp0=$(get_index "${ele_split[0]^^}")
+		declare -i tmp1=$(get_index "${ele_split[1]^^}")
 		if [[ "$tmp0" -gt "$tmp1" ]]; then
 			tmp2=$tmp0
 			tmp0=$tmp1
 			tmp1=$tmp2	
 		fi
 		dif=$(($tmp1 - $tmp0))
+		field_range_recalc=$(($dif + 1))
+		printf "$field_range_recalc\n" >> $tdir/recalculation.txt
 			printf $dif"," >> $tdir/dif-doc.txt
 		# check elements of given data for a range to be exploded
 		if [[ "${size_array[$i]}" = *-* ]]; then			
@@ -104,14 +109,52 @@ explode_sizes() {
 }
 
 
-
-
-
-
-
-
-
-
+final_splosion() {
+	i=0
+	indv_part_array=()
+	while read line; do
+		indv_part_array[$i]=$line
+		i=$(($i + 1))
+	done < $tdir/part-doc.txt
+	# value to test against for a condition when incrementing through the size group loop
+	size_field_amount=$((${#size_array[@]}))
+	# increments for initial loop that iterates through each individual part
+	i=0; 	l=1
+			#     i < 12
+	# loop through each part in part array to print at the begin of each line
+	while [[ "$i" -lt  "${#indv_part_array[@]}" ]]; do
+		# print part at line begin
+		printf "\n${indv_part_array[$i]}" >> $data/column_splosion.csv
+			# assign a temporary variable the current necessary line
+			line=$(sed "${l}q;d" < $tdir/price-doc.txt)
+			# store each price from the line in element of tmp_price_array
+			IFS=',' read -a tmp_price_array <<< $line		
+			# t is the increment for 	
+			t=0; 	
+			# loop through size groups
+			#     t < 3
+			while [[ "$t" -lt "$size_field_amount" ]]; do
+			
+				group_price="${tmp_price_array[$t]}";
+				if [[ "${dif_array[$t]}" -gt 0 ]]; then
+					
+					# loop through each size
+					# j < 3
+					j=0
+					while [[ "$j" -le "${dif_array[$t]}" ]]; do
+						printf ",$group_price" >> $data/column_splosion.csv
+						j=$(($j + 1))
+					done
+				else
+					printf ",$group_price" >> $data/column_splosion.csv
+				fi
+						
+				t=$(($t + 1))
+			done	
+		l=$(($l + 1))
+		i=$(($i + 1))
+	done
+}
 
 # Splits each row of a document into an element of row_array for easier manipulation
 split_lines() {
@@ -194,23 +237,21 @@ permutation_creation() {
 # select_prices function stores prices from the original data file into a new file for manipulation
 select_prices() {
 	calc=""
-	> $tdir/recalculation.txt
-	if [[ "$file_option" = 0 ]]; then
+	if [[ $need_splodin = 0 ]]; then
 		while read line; do
 			calc=$(($calc + $line))
-			i=$(($i + 1))
 		done < $tdir/recalculation.txt
+		calc=$(($calc + 1))
+		new_range=2-$calc
+	else
+		new_range=$price_size_fields
 	fi
-		temp_new_range="${price_size_fields%-*}-$((9 - 1 + 4))"
-		new_range=2-10
 		i=0
 		temp_array=()
-
-	while read
-		do
-			temp_array[$i]=$(sed 's/,*$//' | cut -d ',' -f $new_range)		
-			echo "${temp_array[@]}" > $tdir/price-file.txt
-			i=`expr $i + 1`
+	while read; do
+		temp_array[$i]=$(sed 's/,*$//' | cut -d ',' -f $new_range)		
+		echo "${temp_array[@]}" > $tdir/price-file.txt
+		i=`expr $i + 1`
 	done < $reused_datafile	
 }
 
@@ -258,67 +299,17 @@ split_price() {
 
 # print part number next to price
 final_output() {
-	> $data/final_output.txt
+	> $tdir/output.txt
 	length=`expr ${#final_part_array[@]}`
 	i=0
 	while [ $i -lt $length ]
 	do
-		printf "${final_part_array[$i]},${final_price_array[$i]}\n" >> $data/final_output.txt
+		printf "${final_part_array[$i]},${final_price_array[$i]}\n" >> $tdir/output.txt
 		i=`expr $i + 1`
 	done
-	#echo ${final_part_array[@]}
-	echo "Data is stored in $data/final_output.txt"	
+	sed -e 's/\(.*\)/\U\1/' $tdir/output.txt > $data/final_output.csv
+	echo "Data is stored in $data/final_output.csv"	
 }
-
-
-final() {
-	i=0
-	indv_part_array=()
-	while read line; do
-		indv_part_array[$i]=$line
-		i=$(($i + 1))
-	done < $tdir/part-doc.txt
-	# value to test against for a condition when incrementing through the size group loop
-	size_field_amount=$((${#size_array[@]}))
-	# increments for initial loop that iterates through each individual part
-	i=0; 	l=1
-			#     i < 12
-	# loop through each part in part array to print at the begin of each line
-	while [[ "$i" -lt  "${#indv_part_array[@]}" ]]; do
-		# print part at line begin
-		printf "\n${indv_part_array[$i]}" >> $data/column_splosion.csv
-			# assign a temporary variable the current necessary line
-			line=$(sed "${l}q;d" < $tdir/price-doc.txt)
-			# store each price from the line in element of tmp_price_array
-			IFS=',' read -a tmp_price_array <<< $line		
-			# t is the increment for 	
-			t=0; 	
-			# loop through size groups
-			#     t < 3
-			while [[ "$t" -lt "$size_field_amount" ]]; do
-			
-				group_price="${tmp_price_array[$t]}";
-				if [[ "${dif_array[$t]}" -gt 0 ]]; then
-					
-					# loop through each size
-					# j < 3
-					j=0
-					while [[ "$j" -le "${dif_array[$t]}" ]]; do
-						printf ",$group_price" >> $data/column_splosion.csv
-						j=$(($j + 1))
-					done
-				else
-					printf ",$group_price" >> $data/column_splosion.csv
-				fi
-						
-				t=$(($t + 1))
-			done	
-		l=$(($l + 1))
-		i=$(($i + 1))
-	done
-}
-
-
 
 debug() {
 	# when debug equals 1, all of the files in the temp directory will be cleared
@@ -331,7 +322,7 @@ debug() {
 		rm $tdir/*
 	fi
 	if [[ "$debug" -eq 2 ]]; then
-		xdg-open $data/final_output.txt
+		xdg-open $data/final_output.csv
 	fi
 }
 
@@ -340,9 +331,10 @@ main() {
 	### sploder
 	trim_format
 	explode_sizes
-	final
+	final_splosion
 
 	### spb
+	retrim
 	split_lines
 	get_sizes
 	get_parts
