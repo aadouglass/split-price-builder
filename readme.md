@@ -28,17 +28,21 @@ This will use the data within file.csv located in the data directory, explode an
 ```
 $ bash ./split-price-builder.sh data/file.csv 0 5-7 1 1 2
 
- part1, price
- part2, price
- part3, price
- part4, price
- part5, price
- part6, price
- part7, price
+ part1-S, price
+ part1-M, price
+ part1-L, price
+ part1-XL, price
+ part1-2XL, price
+ part1-3XL, price
+ part1-4XL, price
+ part1-5XL, price
+ part1-6XL, price
+ part1-7XL, price
+ part2-S, price
  ............
  ............
  ............
- last part, price
+ lastpart-7XL, price
 $
 ```
 Version 1.0
