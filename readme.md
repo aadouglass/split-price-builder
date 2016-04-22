@@ -12,11 +12,11 @@ There are six parameters to be passed to the script:
 * Parameter 1: The path to the .csv file containing parts and prices.
 * Parameter 2: This will be '0' if you need to expand a column holding a range of sizes into more columns of individual sizes, otherwise pass '1'.
 * Parameter 3: The range of columns/fields that the prices span across. (ex.  
-|        |        |        |        |  S-XL  | 2XL-4XL| 5XL-6XL|
-|--------|--------|--------|--------|--------|--------|--------|
-|  size  | field2 | field3 | field4 | $12.45 | $18.21 | $23.92 |
-|--------|--------|--------|--------|--------|--------|--------|
-|  size  | field2 | field3 | field4 | $12.45 | $18.21 | $23.92 |  
+|        |        |        |        |  S-XL  | 2XL-4XL| 5XL-6XL|  
+|--------|--------|--------|--------|--------|--------|--------|  
+| part1  | field2 | field3 | field4 | $12.45 | $18.21 | $23.92 |  
+|--------|--------|--------|--------|--------|--------|--------|  
+| part2  | field2 | field3 | field4 | $12.45 | $18.21 | $23.92 |  
 parameter = 5-7).
 * Parameter 4: Field/Column number containing parts/products.
 * Parameter 5: The line number containing sizes for the products.
