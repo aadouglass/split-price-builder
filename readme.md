@@ -11,11 +11,13 @@ bash price-builder.sh parameter1 parameter2 parameter3 parameter4 parameter5 par
 There are six parameters to be passed to the script:
 * Parameter 1: The path to the .csv file containing parts and prices.
 * Parameter 2: This will be '0' if you need to expand a column holding a range of sizes into more columns of individual sizes, otherwise pass '1'.
-* Parameter 3: The range of columns/fields that the prices span across. (ex.  
-|        |        |        |        |  S-XL  | 2XL-4XL| 5XL-6XL|  
-|--------|--------|--------|--------|--------|--------|--------|  
-| part1  | field2 | field3 | field4 | $12.45 | $18.21 | $23.92 |    
-| part2  | field2 | field3 | field4 | $12.45 | $18.21 | $23.92 |  
+* Parameter 3: The range of columns/fields that the prices span across.
+
+| field 1 | field 2 | field 3 | field 4 | S-XL  | 2XL-4XL | 5XL-7XL |
+|---------|---------|---------|---------|-------|---------|---------|
+| part1   | field 2 | field 3 | field 4 | 12.45 | 18.21   | 23.92   |
+| part2   | field 2 | field 3 | field 4 | 21.55 | 24.95   | 29.95   | 
+
 parameter = 5-7).
 * Parameter 4: Field/Column number containing parts/products.
 * Parameter 5: The line number containing sizes for the products.
